@@ -1,12 +1,15 @@
 module CLR
 
+export CLRObject,null,CLRException,@Type_str
+export clrtypeof,isclrtype
+
 include("typedef.jl")
 
 include("CoreCLR.jl")
-import .CoreCLR:CoreCLRHost
+using .CoreCLR
 
 include("CLRBridge.jl")
-import .CLRBridge:CLRObject
+using .CLRBridge
 
 include("marshalling.jl")
 

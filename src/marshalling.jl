@@ -25,6 +25,7 @@ function init_marshaller()
     unboxer("System.UInt32", CLRBridge.GetUInt32)
     unboxer("System.Int64", CLRBridge.GetInt64)
     unboxer("System.UInt64", CLRBridge.GetUInt64)
+    unboxer("System.Char", CLRBridge.GetChar)
     unboxer("System.String", CLRBridge.GetString)
     boxer(jltype, setter) = begin
         types_to_box[jltype] = setter
@@ -38,10 +39,12 @@ function init_marshaller()
     boxer(UInt32, CLRBridge.PutUInt32)
     boxer(Int64, CLRBridge.PutInt64)
     boxer(UInt64, CLRBridge.PutUInt64)
+    boxer(Char, CLRBridge.PutChar)
     boxer(String, CLRBridge.PutString)
 end
 
 function unbox(obj::CLRObject)
+    obj.handle == 0 && return obj
     typename = CLRBridge.GetString(clrtypeof(obj).handle)
     if haskey(types_to_unbox, typename)
         return types_to_unbox[typename](obj.handle)

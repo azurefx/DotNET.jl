@@ -1,12 +1,20 @@
 module CLRBridge
 
-import ...CLR:HRESULT,isfailed,CLRHostError,BStr,CLRHost,create_host,create_delegate 
+import ...CLR:HRESULT,isfailed,CLRHostError,BStr,CLRHost,create_host,create_delegate
+export CLRObject,null,CLRException,BindingFlags
 
 const Handle = UInt
 
 mutable struct CLRObject
     handle::Handle
 end
+
+function Base.setproperty!(x::CLRObject, f::Symbol, v)
+    @assert f != :handle "attempt to modify underlying handle of CLRObject"
+    setfield!(x, f, v)
+end
+
+const null = CLRObject(0)
 
 function track(obj::CLRObject)
     if obj.handle != 0
@@ -53,6 +61,8 @@ const fp_Release = empty_fp()
 const fp_PutString = empty_fp()
 const fp_GetString = empty_fp()
 const fp_FreeString = empty_fp()
+const fp_PutChar = empty_fp()
+const fp_GetChar = empty_fp()
 const fp_PutBool = empty_fp()
 const fp_GetBool = empty_fp()
 const fp_PutInt8 = empty_fp()
@@ -82,6 +92,8 @@ function init(host::CLRHost)
     fp_PutString[] = fp_primitive("PutString")
     fp_GetString[] = fp_primitive("GetString")
     fp_FreeString[] = fp_primitive("FreeString")
+    fp_PutChar[] = fp_primitive("PutChar")
+    fp_GetChar[] = fp_primitive("GetChar")
     fp_PutBool[] = fp_primitive("PutBool")
     fp_GetBool[] = fp_primitive("GetBool")
     fp_PutInt8[] = fp_primitive("PutInt8")
@@ -124,6 +136,14 @@ end
 
 function FreeString(bstr)
     ccall(fp_FreeString[], Cvoid, (BStr,), bstr)
+end
+
+function PutChar(handle, value)
+    ccall(fp_PutChar[], Handle, (Handle, UInt16), handle, value)
+end
+
+function GetChar(handle)
+    Char(ccall(fp_GetChar[], UInt16, (Handle,), handle))
 end
 
 function PutBool(handle, value)
@@ -213,8 +233,9 @@ function GetObjectType(handle)
 end
 
 baremodule BindingFlags
+
 using Base:@enum
-@enum BindingFlag begin
+@enum BindingFlag::UInt32 begin
     Default = 0
     IgnoreCase = 1
     DeclaredOnly = 2
@@ -238,10 +259,16 @@ using Base:@enum
 end
 end
 
+import .BindingFlags:BindingFlag
+
+Base.:(|)(a::BindingFlag, b::BindingFlag) = UInt32(a) | UInt32(b)
+Base.:(|)(a::BindingFlag, b) = UInt32(a) | b
+Base.:(|)(a, b::BindingFlag) = b | a
+
 function InvokeMember(type, name, bindingFlags, binder, target, providedArgs)
     exception = Ref{Handle}()
     ret = ccall(fp_InvokeMember[], Handle,
-    (Handle, BStr, BindingFlags.BindingFlag, Handle, Handle, Ptr{Handle}, UInt64, Ptr{Handle}),
+    (Handle, BStr, UInt32, Handle, Handle, Ptr{Handle}, UInt64, Ptr{Handle}),
     type, name, bindingFlags, binder, target, providedArgs, length(providedArgs), exception)
     if exception[] != 0
         track_and_throw(CLRObject(exception[]))

@@ -3,6 +3,7 @@ module CoreCLR
 using Libdl
 
 import ...CLR:HRESULT,isfailed,CLRHostError,CLRHost,create_host,create_delegate
+export CoreCLRHost
 
 const fp_coreclr_initialize = Ref{Ptr{Cvoid}}(0)
 const fp_coreclr_shutdown = Ref{Ptr{Cvoid}}(0)

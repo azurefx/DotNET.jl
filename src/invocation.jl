@@ -1,8 +1,11 @@
-function invoke_static(type::CLRObject, name, args...)
-    BindingFlags = CLRBridge.BindingFlags
-    flags = BindingFlags.InvokeMethod
+function invoke_member(flags, type::CLRObject, this::CLRObject, name, args...)
     boxed = map(args, 1:length(args)) do arg, i
         box(arg, i).handle
     end
-    CLRBridge.InvokeMember(type.handle, string(name), flags, 0, 0, boxed)
+    unbox(CLRBridge.InvokeMember(type.handle, string(name), flags, 0, this.handle, boxed))
+end
+
+function invoke_member(type::CLRObject, this::CLRObject, name, args...)
+    flags = BindingFlags.InvokeMethod | BindingFlags.GetField | BindingFlags.GetProperty
+    invoke_member(flags, type, this, name, args...)
 end
