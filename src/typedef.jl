@@ -81,6 +81,8 @@ end
 
 abstract type CLRHost end
 
+function detect_runtime end
+
 function create_host end
 
 function create_delegate end

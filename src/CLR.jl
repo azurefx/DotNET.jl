@@ -19,20 +19,30 @@ struct DummyCLRHost <: CLRHost end
 
 const CURRENT_CLR_HOST = Ref{CLRHost}(DummyCLRHost())
 
-function build_tpalist(dir)
-    joinpath.(dir, filter(x->splitext(x)[2] == ".dll", readdir(dir)))
+function __init__()
+    if CURRENT_CLR_HOST[] != DummyCLRHost() return end
+    coreclr = detect_runtime(CoreCLRHost)
+    if !isempty(coreclr)
+        init_coreclr(first(coreclr))
+        return
+    end
+    @error "No .NET Core runtime found on this system."
 end
 
-function init_coreclr(::Type{CoreCLRHost})
-    if CURRENT_CLR_HOST[] != DummyCLRHost() return end
-    coreclr = raw"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.0.1\coreclr.dll"
+function init_coreclr(runtime)
+    CoreCLR.init(runtime)
     clrbridge = raw"C:\Users\Azure\Documents\Git\CLRBridge\CLRBridge\bin\Debug\netstandard2.0\CLRBridge.dll"
-    tpalist = build_tpalist(dirname(coreclr))
+    if !isfile(clrbridge)
+        error("CLRBridge.dll not found")
+    end
+    tpalist = build_tpalist(dirname(runtime.path))
     push!(tpalist, clrbridge)
-    CoreCLR.init(coreclr)
     CURRENT_CLR_HOST[] = create_host(CoreCLRHost;tpalist = tpalist)
     post_init()
-    nothing
+end
+
+function build_tpalist(dir)
+    joinpath.(dir, filter(x->splitext(x)[2] == ".dll", readdir(dir)))
 end
 
 function post_init()
