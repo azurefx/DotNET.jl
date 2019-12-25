@@ -1,7 +1,7 @@
 module CLRBridge
 
 import ...CLR:HRESULT,isfailed,CLRHostError,BStr,CLRHost,create_host,create_delegate
-export CLRObject,null,CLRException,BindingFlags
+export CLRObject,null,gethandle,CLRException,BindingFlags
 
 const Handle = UInt
 
@@ -14,25 +14,28 @@ function Base.setproperty!(x::CLRObject, f::Symbol, v)
     setfield!(x, f, v)
 end
 
+gethandle(obj::CLRObject) = getfield(obj, :handle)
+
 const null = CLRObject(0)
 
-function track(obj::CLRObject)
-    if obj.handle != 0
-        finalizer(obj) do x
-            Release(x.handle)
+function track(handle)
+    obj=CLRObject(handle)
+    if handle != 0
+        finalizer(obj) do _
+            Release(handle)
         end
     end
     obj
 end
 
 function Base.show(io::IO, x::CLRObject)
-    if x.handle == 0
+    if gethandle(x) == 0
         print(io, "null")
         return
     end
-    print(io, GetString(GetObjectType(x.handle).handle))
+    print(io, GetString(gethandle(GetObjectType(gethandle(x)))))
     print(io, "(")
-    print(io, repr(GetString(x.handle)))
+    print(io, repr(GetString(gethandle(x))))
     print(io, ")")
 end
 
@@ -45,14 +48,14 @@ function Base.showerror(io::IO, ex::CLRException)
     print(io, "CLRException: $(ex.message)")
 end
 
-function track_and_throw(clrex::CLRObject)
-    track(clrex)
+function track_and_throw(exhandle)
+    exobj=track(exhandle)
     msg = try
-        GetString(clrex.handle)
+        GetString(exhandle)
     catch ex
         "Failed to get exception description, caused by $ex"
     end
-    throw(CLRException(msg, clrex))
+    throw(CLRException(msg, exobj))
 end
 
 empty_fp() = Ref{Ptr{Cvoid}}(0)
@@ -222,14 +225,14 @@ function GetType(typename)
     exception = Ref{Handle}()
     ret = ccall(fp_GetType[], Handle, (BStr, Ptr{Handle}), typename, exception)
     if exception[] != 0
-        track_and_throw(CLRObject(exception[]))
+        track_and_throw(exception[])
     end
-    return track(CLRObject(ret))
+    return track(ret)
 end
 
 function GetObjectType(handle)
     ret = ccall(fp_GetObjectType[], Handle, (Handle,), handle)
-    return track(CLRObject(ret))
+    return track(ret)
 end
 
 baremodule BindingFlags
@@ -271,13 +274,9 @@ function InvokeMember(type, name, bindingFlags, binder, target, providedArgs)
     (Handle, BStr, UInt32, Handle, Handle, Ptr{Handle}, UInt64, Ptr{Handle}),
     type, name, bindingFlags, binder, target, providedArgs, length(providedArgs), exception)
     if exception[] != 0
-        track_and_throw(CLRObject(exception[]))
+        track_and_throw(exception[])
     end
-    if ret != 0
-        return track(CLRObject(ret))
-    else
-        return CLRObject(0)
-    end
+    return track(ret)
 end
 
 end

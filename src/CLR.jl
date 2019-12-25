@@ -1,7 +1,7 @@
 module CLR
 
 export CLRObject,null,CLRException,@Type_str
-export clrtypeof,isclrtype
+export clrtypeof,isclrtype,isassignable
 
 include("typedef.jl")
 
@@ -11,9 +11,13 @@ using .CoreCLR
 include("CLRBridge.jl")
 using .CLRBridge
 
+include("typeinfo.jl")
+
 include("marshalling.jl")
 
-include("invocation.jl")
+include("reflection.jl")
+
+include("operators.jl")
 
 struct DummyCLRHost <: CLRHost end
 
@@ -48,10 +52,6 @@ end
 function post_init()
     CLRBridge.init(CURRENT_CLR_HOST[])
     init_marshaller()
-end
-
-macro Type_str(name)
-    :(CLRBridge.GetType($name))
 end
 
 end # module

@@ -1,14 +1,3 @@
-function clrtypeof(x::CLRObject)
-    CLRBridge.GetObjectType(x.handle)
-end
-
-function isclrtype(x::CLRObject, t::CLRObject)
-    xt = clrtypeof(x)
-    ret = CLRBridge.InvokeMember(clrtypeof(xt).handle, "Equals", CLRBridge.BindingFlags.InvokeMethod,
-    0, xt.handle, [t.handle])
-    return CLRBridge.GetBool(ret.handle)
-end
-
 const types_to_unbox = Dict{String,Function}()
 const types_to_box = Dict{DataType,Function}()
 
@@ -44,14 +33,16 @@ function init_marshaller()
 end
 
 function unbox(obj::CLRObject)
-    obj.handle == 0 && return obj
-    typename = CLRBridge.GetString(clrtypeof(obj).handle)
+    gethandle(obj) == 0 && return obj
+    typename = CLRBridge.GetString(gethandle(clrtypeof(obj)))
     if haskey(types_to_unbox, typename)
-        return types_to_unbox[typename](obj.handle)
+        return types_to_unbox[typename](gethandle(obj))
     else
         return obj
     end
 end
+
+box(x::CLRObject, handle) = x
 
 function box(x, handle)
     type = typeof(x)
@@ -59,5 +50,53 @@ function box(x, handle)
         CLRObject(types_to_box[type](handle, x))
     else
         throw(ArgumentError("Cannot marshal objects of Julia type $type"))
+    end
+end
+
+function invokemember(flags, type::CLRObject, this::CLRObject, name, args...)
+    boxed = map(args, 1:length(args)) do arg, i
+        gethandle(box(arg, i))
+    end
+    unbox(CLRBridge.InvokeMember(gethandle(type), string(name), flags, 0, gethandle(this), boxed))
+end
+
+function invokemember(type::CLRObject, this::CLRObject, name, args...)
+    flags = BindingFlags.InvokeMethod | BindingFlags.GetField | BindingFlags.GetProperty
+    invokemember(flags, type, this, name, args...)
+end
+
+function Base.iterate(obj::CLRObject)
+    gethandle(obj) == 0 && return nothing
+    objty = clrtypeof(obj)
+    enumerablety = Type"System.Collections.IEnumerable"
+    if !isassignable(enumerablety, objty)
+        throw(ArgumentError("Object is not iterable"))
+    end
+    enumerator = invokemember(enumerablety, obj, :GetEnumerator)
+    enumeratorty = Type"System.Collections.IEnumerator"
+    hasnext = invokemember(enumeratorty, enumerator, :MoveNext)
+    hasnext || return nothing
+    next = invokemember(enumeratorty, enumerator, :Current)
+    return (next, (enumerator, enumeratorty))
+end
+
+function Base.iterate(::CLRObject, state)
+    enumerator, enumeratorty = state
+    hasnext = invokemember(enumeratorty, enumerator, :MoveNext)
+    hasnext || return nothing
+    next = invokemember(enumeratorty, enumerator, :Current)
+    return (next, (enumerator, enumeratorty))
+end
+
+function Base.eltype(obj::CLRObject)
+    invokemember(Type"System.Type", clrtypeof(obj), :GetElementType)
+end
+
+function Base.length(obj::CLRObject)
+    objty = clrtypeof(obj)
+    if isassignable(Type"System.Array", objty)
+        invokemember(Type"System.Array", obj, :Length)
+    else
+        throw(ArgumentError("Cannot determine length from type $objty"))
     end
 end
