@@ -19,7 +19,7 @@ gethandle(obj::CLRObject) = getfield(obj, :handle)
 const null = CLRObject(0)
 
 function track(handle)
-    obj=CLRObject(handle)
+    obj = CLRObject(handle)
     if handle != 0
         finalizer(obj) do _
             Release(handle)
@@ -28,16 +28,7 @@ function track(handle)
     obj
 end
 
-function Base.show(io::IO, x::CLRObject)
-    if gethandle(x) == 0
-        print(io, "null")
-        return
-    end
-    print(io, GetString(gethandle(GetObjectType(gethandle(x)))))
-    print(io, "(")
-    print(io, repr(GetString(gethandle(x))))
-    print(io, ")")
-end
+Base.string(x::CLRObject) = GetString(gethandle(x))
 
 struct CLRException <: Exception
     message::String
@@ -49,7 +40,7 @@ function Base.showerror(io::IO, ex::CLRException)
 end
 
 function track_and_throw(exhandle)
-    exobj=track(exhandle)
+    exobj = track(exhandle)
     msg = try
         GetString(exhandle)
     catch ex
@@ -61,6 +52,8 @@ end
 empty_fp() = Ref{Ptr{Cvoid}}(0)
 
 const fp_Release = empty_fp()
+const fp_Duplicate = empty_fp()
+const fp_CreateArray = empty_fp()
 const fp_PutString = empty_fp()
 const fp_GetString = empty_fp()
 const fp_FreeString = empty_fp()
@@ -89,9 +82,24 @@ const fp_GetType = empty_fp()
 const fp_GetObjectType = empty_fp()
 const fp_InvokeMember = empty_fp()
 
+const fp_SetCallbackHandler = empty_fp()
+const fp_CreateDelegate = empty_fp()
+
+const registered_callbacks = Dict{UInt,Function}()
+
+function handle_callback(context, argc)
+    if !haskey(registered_callbacks, context)
+        error("Callback function not registered")
+    end
+    fn = registered_callbacks[context]
+    return fn(argc)
+end
+
 function init(host::CLRHost)
     fp_primitive(x) = create_delegate(host, "CLRBridge", "CLRBridge.Primitive", x)
     fp_Release[] = fp_primitive("Release")
+    fp_Duplicate[] = fp_primitive("Duplicate")
+    fp_CreateArray[] = fp_primitive("CreateArray")
     fp_PutString[] = fp_primitive("PutString")
     fp_GetString[] = fp_primitive("GetString")
     fp_FreeString[] = fp_primitive("FreeString")
@@ -119,11 +127,24 @@ function init(host::CLRHost)
     fp_GetType[] = fp_meta("GetType")
     fp_GetObjectType[] = fp_meta("GetObjectType")
     fp_InvokeMember[] = fp_meta("InvokeMember")
+    fp_callback(x) = create_delegate(host, "CLRBridge", "CLRBridge.Callback", x)
+    fp_SetCallbackHandler[] = fp_callback("SetCallbackHandler")
+    fp_CreateDelegate[] = fp_callback("CreateDelegate")
+    handler = @cfunction(handle_callback,Handle,(UInt, UInt32))
+    SetCallbackHandler(handler)
     nothing
 end
 
 function Release(handle)
     ccall(fp_Release[], Bool, (Handle,), handle)
+end
+
+function Duplicate(handle)
+    track(ccall(fp_Duplicate[], Handle, (Handle,), handle))
+end
+
+function CreateArray(argc)
+    track(ccall(fp_CreateArray[], Handle, (UInt32,), argc))
 end
 
 function PutString(handle, value)
@@ -271,8 +292,21 @@ Base.:(|)(a, b::BindingFlag) = b | a
 function InvokeMember(type, name, bindingFlags, binder, target, providedArgs)
     exception = Ref{Handle}()
     ret = ccall(fp_InvokeMember[], Handle,
-    (Handle, BStr, UInt32, Handle, Handle, Ptr{Handle}, UInt64, Ptr{Handle}),
+    (Handle, BStr, UInt32, Handle, Handle, Ptr{Handle}, UInt32, Ptr{Handle}),
     type, name, bindingFlags, binder, target, providedArgs, length(providedArgs), exception)
+    if exception[] != 0
+        track_and_throw(exception[])
+    end
+    return track(ret)
+end
+
+function SetCallbackHandler(fp)
+    ccall(fp_SetCallbackHandler[], Cvoid, (Ptr{Cvoid},), fp)
+end
+
+function CreateDelegate(htype, context)
+    exception = Ref{Handle}()
+    ret = ccall(fp_CreateDelegate[], Handle, (Handle, UInt, Ptr{Handle}), htype, context, exception)
     if exception[] != 0
         track_and_throw(exception[])
     end

@@ -74,7 +74,7 @@ function detect_runtime(::Type{CoreCLRHost})
     return sort(runtimes;by = x->x.version,rev = true)
 end
 
-function create_host(::Type{CoreCLRHost};tpalist = []) 
+function create_host(::Type{CoreCLRHost};tpalist = [])
     propk = [
         "TRUSTED_PLATFORM_ASSEMBLIES"
     ]

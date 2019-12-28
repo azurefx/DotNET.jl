@@ -2,6 +2,7 @@ module CLR
 
 export CLRObject,null,CLRException,@Type_str
 export clrtypeof,isclrtype,isassignable
+export clreltype
 
 include("typedef.jl")
 
@@ -14,6 +15,8 @@ using .CLRBridge
 include("typeinfo.jl")
 
 include("marshalling.jl")
+
+include("callback.jl")
 
 include("reflection.jl")
 

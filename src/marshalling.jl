@@ -1,61 +1,64 @@
-const types_to_unbox = Dict{String,Function}()
-const types_to_box = Dict{DataType,Function}()
+const types_to_unbox = Dict{String,Tuple{Type,Function}}()
 
 function init_marshaller()
-    unboxer(clrname, getter) = begin
-        types_to_unbox[clrname] = getter
+    unboxer(clrname, jltype, getter) = begin
+        types_to_unbox[clrname] = (jltype, getter)
     end
-    unboxer("System.Boolean", CLRBridge.GetBool)
-    unboxer("System.SByte", CLRBridge.GetInt8)
-    unboxer("System.Byte", CLRBridge.GetUInt8)
-    unboxer("System.Int16", CLRBridge.GetInt16)
-    unboxer("System.UInt16", CLRBridge.GetUInt16)
-    unboxer("System.Int32", CLRBridge.GetInt32)
-    unboxer("System.UInt32", CLRBridge.GetUInt32)
-    unboxer("System.Int64", CLRBridge.GetInt64)
-    unboxer("System.UInt64", CLRBridge.GetUInt64)
-    unboxer("System.Char", CLRBridge.GetChar)
-    unboxer("System.String", CLRBridge.GetString)
-    boxer(jltype, setter) = begin
-        types_to_box[jltype] = setter
-    end
-    boxer(Bool, CLRBridge.PutBool)
-    boxer(Int8, CLRBridge.PutInt8)
-    boxer(UInt8, CLRBridge.PutUInt8)
-    boxer(Int16, CLRBridge.PutInt16)
-    boxer(UInt16, CLRBridge.PutUInt16)
-    boxer(Int32, CLRBridge.PutInt32)
-    boxer(UInt32, CLRBridge.PutUInt32)
-    boxer(Int64, CLRBridge.PutInt64)
-    boxer(UInt64, CLRBridge.PutUInt64)
-    boxer(Char, CLRBridge.PutChar)
-    boxer(String, CLRBridge.PutString)
+    unboxer("System.Boolean", Bool, CLRBridge.GetBool)
+    unboxer("System.SByte", Int8, CLRBridge.GetInt8)
+    unboxer("System.Byte", UInt8, CLRBridge.GetUInt8)
+    unboxer("System.Int16", Int16, CLRBridge.GetInt16)
+    unboxer("System.UInt16", UInt16, CLRBridge.GetUInt16)
+    unboxer("System.Int32", Int32, CLRBridge.GetInt32)
+    unboxer("System.UInt32", UInt32, CLRBridge.GetUInt32)
+    unboxer("System.Int64", Int64, CLRBridge.GetInt64)
+    unboxer("System.UInt64", UInt64, CLRBridge.GetUInt64)
+    unboxer("System.Char", Char, CLRBridge.GetChar)
+    unboxer("System.String", String, CLRBridge.GetString)
 end
 
 function unbox(obj::CLRObject)
     gethandle(obj) == 0 && return obj
-    typename = CLRBridge.GetString(gethandle(clrtypeof(obj)))
+    typename = string(clrtypeof(obj))
     if haskey(types_to_unbox, typename)
-        return types_to_unbox[typename](gethandle(obj))
+        return types_to_unbox[typename][2](gethandle(obj))
     else
         return obj
     end
 end
 
-box(x::CLRObject, handle) = x
+box(x::CLRObject, handle) = gethandle(x)
+boxedtype(::Type{CLRObject}) = Type"System.Object"
+box(x::Bool, handle) = CLRBridge.PutBool(handle, x)
+boxedtype(::Type{Bool}) = Type"System.Boolean"
+box(x::Int8, handle) = CLRBridge.PutInt8(handle, x)
+boxedtype(::Type{Int8}) = Type"System.SByte"
+box(x::UInt8, handle) = CLRBridge.PutUInt8(handle, x)
+boxedtype(::Type{UInt8}) = Type"System.Byte"
+box(x::Int16, handle) = CLRBridge.PutInt16(handle, x)
+boxedtype(::Type{Int16}) = Type"System.Int16"
+box(x::UInt16, handle) = CLRBridge.PutUInt16(handle, x)
+boxedtype(::Type{UInt16}) = Type"System.UInt16"
+box(x::Int32, handle) = CLRBridge.PutInt32(handle, x)
+boxedtype(::Type{Int32}) = Type"System.Int32"
+box(x::UInt32, handle) = CLRBridge.PutUInt32(handle, x)
+boxedtype(::Type{UInt32}) = Type"System.UInt32"
+box(x::Int64, handle) = CLRBridge.PutInt64(handle, x)
+boxedtype(::Type{Int64}) = Type"System.Int64"
+box(x::UInt64, handle) = CLRBridge.PutUInt64(handle, x)
+boxedtype(::Type{UInt64}) = Type"System.UInt64"
+box(x::Char, handle) = CLRBridge.PutChar(handle, x)
+boxedtype(::Type{Char}) = Type"System.Char"
+box(x::String, handle) = CLRBridge.PutString(handle, x)
+boxedtype(::Type{String}) = Type"System.String"
 
-function box(x, handle)
-    type = typeof(x)
-    if haskey(types_to_box, type)
-        CLRObject(types_to_box[type](handle, x))
-    else
-        throw(ArgumentError("Cannot marshal objects of Julia type $type"))
-    end
+function Base.convert(CLRObject, x)
+    CLRBridge.Duplicate(box(x, 1))
 end
 
 function invokemember(flags, type::CLRObject, this::CLRObject, name, args...)
     boxed = map(args, 1:length(args)) do arg, i
-        gethandle(box(arg, i))
+        box(arg, i)
     end
     unbox(CLRBridge.InvokeMember(gethandle(type), string(name), flags, 0, gethandle(this), boxed))
 end
@@ -65,38 +68,6 @@ function invokemember(type::CLRObject, this::CLRObject, name, args...)
     invokemember(flags, type, this, name, args...)
 end
 
-function Base.iterate(obj::CLRObject)
-    gethandle(obj) == 0 && return nothing
-    objty = clrtypeof(obj)
-    enumerablety = Type"System.Collections.IEnumerable"
-    if !isassignable(enumerablety, objty)
-        throw(ArgumentError("Object is not iterable"))
-    end
-    enumerator = invokemember(enumerablety, obj, :GetEnumerator)
-    enumeratorty = Type"System.Collections.IEnumerator"
-    hasnext = invokemember(enumeratorty, enumerator, :MoveNext)
-    hasnext || return nothing
-    next = invokemember(enumeratorty, enumerator, :Current)
-    return (next, (enumerator, enumeratorty))
-end
+invokemember(this::CLRObject, name, args...) = invokemember(clrtypeof(this), this, name, args...)
 
-function Base.iterate(::CLRObject, state)
-    enumerator, enumeratorty = state
-    hasnext = invokemember(enumeratorty, enumerator, :MoveNext)
-    hasnext || return nothing
-    next = invokemember(enumeratorty, enumerator, :Current)
-    return (next, (enumerator, enumeratorty))
-end
-
-function Base.eltype(obj::CLRObject)
-    invokemember(Type"System.Type", clrtypeof(obj), :GetElementType)
-end
-
-function Base.length(obj::CLRObject)
-    objty = clrtypeof(obj)
-    if isassignable(Type"System.Array", objty)
-        invokemember(Type"System.Array", obj, :Length)
-    else
-        throw(ArgumentError("Cannot determine length from type $objty"))
-    end
-end
+include("array.jl")
