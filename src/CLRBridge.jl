@@ -92,7 +92,7 @@ function handle_callback(context, argc)
         error("Callback function not registered")
     end
     fn = registered_callbacks[context]
-    return fn(argc)
+    return Handle(fn(argc))
 end
 
 function init(host::CLRHost)

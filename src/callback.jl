@@ -3,7 +3,7 @@ function dispatch_callback(f::Function, argc)
         unbox(CLRObject(i))
     end
     result = f(argv...)
-    return box(result, 1)
+    return isnothing(result) ? 0 : box(result, 1)
 end
 
 function delegate(f::Function, delty::CLRObject)

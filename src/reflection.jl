@@ -6,7 +6,7 @@ function Base.show(io::IO, x::CLRObject)
     end
     type = clrtypeof(x)
     if isassignable(Type"System.Type", type)
-        println(io, string(x))
+        print(io, string(x))
     else 
         print(io, string(type))
         print(io, "(")
@@ -20,6 +20,19 @@ function Base.show(io::IO, x::CLRObject)
     end
 end
 
-function getmethods(type::CLRObject, name)
-    collect(invokemember(type, :GetMember, name))
+function makegenericmethod(mi::CLRObject, args...)
+    invokemember(mi, :MakeGenericMethod, args...)
+end
+
+function getmember(type::CLRObject, name)
+    ret = invokemember(type, :GetMember, typeof(name) == Symbol ? string(name) : name)
+    collect(ret)
+end
+
+function getmethod(type::CLRObject, name, argtypes...)
+    arr = arrayof(Type"System.Type", length(argtypes))
+    for (i, t) in enumerate(argtypes)
+        arraystore(arr, i - 1, t)
+    end
+    invokemember(type, :GetMethod, name, arr)
 end

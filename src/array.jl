@@ -28,8 +28,8 @@ end
 function Base.eltype(obj::CLRObject)
     clrtype = clreltype(obj)
     typestr = string(clrtype)
-    return if haskey(types_to_unbox, typestr)
-        types_to_unbox[typestr][1]
+    return if haskey(TYPES_TO_UNBOX, typestr)
+        TYPES_TO_UNBOX[typestr][1]
     else
         CLRObject
     end

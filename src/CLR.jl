@@ -45,16 +45,11 @@ function init_coreclr(runtime)
     tpalist = build_tpalist(dirname(runtime.path))
     push!(tpalist, clrbridge)
     CURRENT_CLR_HOST[] = create_host(CoreCLRHost;tpalist = tpalist)
-    post_init()
+    CLRBridge.init(CURRENT_CLR_HOST[])
 end
 
 function build_tpalist(dir)
     joinpath.(dir, filter(x->splitext(x)[2] == ".dll", readdir(dir)))
-end
-
-function post_init()
-    CLRBridge.init(CURRENT_CLR_HOST[])
-    init_marshaller()
 end
 
 end # module

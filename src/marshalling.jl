@@ -1,8 +1,8 @@
-const types_to_unbox = Dict{String,Tuple{Type,Function}}()
+const TYPES_TO_UNBOX = Dict{String,Tuple{Type,Function}}()
 
-function init_marshaller()
+let
     unboxer(clrname, jltype, getter) = begin
-        types_to_unbox[clrname] = (jltype, getter)
+        TYPES_TO_UNBOX[clrname] = (jltype, getter)
     end
     unboxer("System.Boolean", Bool, CLRBridge.GetBool)
     unboxer("System.SByte", Int8, CLRBridge.GetInt8)
@@ -20,8 +20,8 @@ end
 function unbox(obj::CLRObject)
     gethandle(obj) == 0 && return obj
     typename = string(clrtypeof(obj))
-    if haskey(types_to_unbox, typename)
-        return types_to_unbox[typename][2](gethandle(obj))
+    if haskey(TYPES_TO_UNBOX, typename)
+        return TYPES_TO_UNBOX[typename][2](gethandle(obj))
     else
         return obj
     end
