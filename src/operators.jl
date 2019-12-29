@@ -21,7 +21,7 @@ function (call::PendingInvocation)(args...)
             invokemember(BindingFlags.CreateInstance, call.type, CLRObject(0), "", args...)
         end
     catch ex
-        if ex isa CLRException && isclrtype(ex.object, Type"System.Reflection.AmbiguousMatchException")
+        if ex isa CLRException && isclrtype(ex.object, T"System.Reflection.AmbiguousMatchException")
             rethrow(ErrorException("""Multiple overloads match the given binding criteria.
             Use '$(call.name)[T]()' to call a generic method with a type argument T."""))
         end
@@ -34,7 +34,7 @@ function (gencall::GenericModifier{PendingInvocation})(args...)
     name = gencall.subject.name
     ngenarg = length(gencall.params)
     if isnothing(name)
-        genty = invokemember(Type"System.Type", type, :MakeGenericType, gencall.params...)
+        genty = makegenerictype(type, gencall.params...)
         return invokemember(BindingFlags.CreateInstance, genty, CLRObject(0), "", args...)
     end
     candidates = getmember(type, name)
@@ -43,11 +43,11 @@ function (gencall::GenericModifier{PendingInvocation})(args...)
         len = invokemember(genargs, :Length)
         if len == ngenarg
             resolved = if ngenarg != 0
-                invokemember(m, :MakeGenericMethod, gencall.params...)
+                makegenericmethod(m, gencall.params...)
             else
                 m
             end
-            arr = arrayof(Type"System.Object", length(args))
+            arr = arrayof(T"System.Object", length(args))
             for (i, x) in enumerate(args)
                 arraystore(arr, i - 1, x)
             end
@@ -61,7 +61,7 @@ function Base.getproperty(obj::CLRObject, sym::Symbol)
     ty = clrtypeof(obj)
     members = nothing
     pi = nothing
-    if isassignable(Type"System.Type", ty)
+    if isassignable(T"System.Type", ty)
         if sym == :new
             return PendingInvocation(obj, CLRObject(0), nothing)
         end
@@ -83,7 +83,7 @@ function Base.getproperty(obj::CLRObject, sym::Symbol)
         end
         pi = PendingInvocation(ty, obj, sym)
     end
-    return if any(x->isassignable(Type"System.Reflection.MethodInfo", clrtypeof(x)), members)
+    return if any(x->isassignable(T"System.Reflection.MethodInfo", clrtypeof(x)), members)
         pi
     else
         invokemember(pi.type, pi.target, pi.name)

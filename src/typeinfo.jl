@@ -11,7 +11,7 @@ function gettypecached(typename)
     return ty
 end
 
-macro Type_str(name)
+macro T_str(name)
     :(gettypecached($name))
 end
 
@@ -27,7 +27,7 @@ function isclrtype(x::CLRObject, t::CLRObject)
 end
 
 function isassignable(totype::CLRObject, fromtype::CLRObject)
-    ret = CLRBridge.InvokeMember(gethandle(Type"System.Type"), "IsAssignableFrom",
+    ret = CLRBridge.InvokeMember(gethandle(T"System.Type"), "IsAssignableFrom",
     CLRBridge.BindingFlags.InvokeMethod, 0, gethandle(totype), [gethandle(fromtype)])
     return CLRBridge.GetBool(gethandle(ret))
 end

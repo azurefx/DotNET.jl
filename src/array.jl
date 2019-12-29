@@ -1,5 +1,5 @@
 function iterate_ienumerable(enumerator::CLRObject)
-    enumeratorty = Type"System.Collections.IEnumerator"
+    enumeratorty = T"System.Collections.IEnumerator"
     hasnext = invokemember(enumeratorty, enumerator, :MoveNext)
     hasnext || return nothing
     next = invokemember(enumeratorty, enumerator, :Current)
@@ -9,7 +9,7 @@ end
 function Base.iterate(obj::CLRObject)
     gethandle(obj) == 0 && return nothing
     objty = clrtypeof(obj)
-    enumerablety = Type"System.Collections.IEnumerable"
+    enumerablety = T"System.Collections.IEnumerable"
     if isassignable(enumerablety, objty)
         enumerator = invokemember(enumerablety, obj, :GetEnumerator)
         return iterate_ienumerable(enumerator)
@@ -26,7 +26,7 @@ function Base.iterate(::CLRObject, state)
 end
 
 function clreltype(obj::CLRObject)
-    invokemember(Type"System.Type", clrtypeof(obj), :GetElementType)
+    invokemember(T"System.Type", clrtypeof(obj), :GetElementType)
 end
 
 function Base.eltype(obj::CLRObject)
@@ -41,23 +41,23 @@ end
 
 function Base.length(obj::CLRObject)
     objty = clrtypeof(obj)
-    if isassignable(Type"System.Array", objty)
-        invokemember(Type"System.Array", obj, :Length)
+    if isassignable(T"System.Array", objty)
+        invokemember(T"System.Array", obj, :Length)
     else
         throw(ArgumentError("Cannot determine length from type $objty"))
     end
 end
 
 function arrayof(elty::CLRObject, dims)
-    invokemember(Type"System.Array", CLRObject(0), :CreateInstance, elty, dims...)
+    invokemember(T"System.Array", CLRObject(0), :CreateInstance, elty, dims...)
 end
 
 function arraystore(arr::CLRObject, index, x)
-    invokemember(Type"System.Array", arr, :SetValue, x, index...)
+    invokemember(T"System.Array", arr, :SetValue, x, index...)
 end
 
 function arrayload(arr::CLRObject, index)
-    invokemember(Type"System.Array", arr, :GetValue, index...)
+    invokemember(T"System.Array", arr, :GetValue, index...)
 end
 
 makearraytype(ty::CLRObject, rank) = invokemember(ty, :MakeArrayType, rank)

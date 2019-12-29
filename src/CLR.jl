@@ -1,6 +1,6 @@
 module CLR
 
-export CLRObject,null,CLRException,@Type_str
+export CLRObject,null,CLRException,@T_str
 export clrtypeof,isclrtype,isassignable
 export clreltype
 

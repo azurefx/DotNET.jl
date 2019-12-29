@@ -28,29 +28,29 @@ function unbox(obj::CLRObject)
 end
 
 box(x::CLRObject, handle) = gethandle(x)
-boxedtype(::Type{CLRObject}) = Type"System.Object"
+boxedtype(::Type{CLRObject}) = T"System.Object"
 box(x::Bool, handle) = CLRBridge.PutBool(handle, x)
-boxedtype(::Type{Bool}) = Type"System.Boolean"
+boxedtype(::Type{Bool}) = T"System.Boolean"
 box(x::Int8, handle) = CLRBridge.PutInt8(handle, x)
-boxedtype(::Type{Int8}) = Type"System.SByte"
+boxedtype(::Type{Int8}) = T"System.SByte"
 box(x::UInt8, handle) = CLRBridge.PutUInt8(handle, x)
-boxedtype(::Type{UInt8}) = Type"System.Byte"
+boxedtype(::Type{UInt8}) = T"System.Byte"
 box(x::Int16, handle) = CLRBridge.PutInt16(handle, x)
-boxedtype(::Type{Int16}) = Type"System.Int16"
+boxedtype(::Type{Int16}) = T"System.Int16"
 box(x::UInt16, handle) = CLRBridge.PutUInt16(handle, x)
-boxedtype(::Type{UInt16}) = Type"System.UInt16"
+boxedtype(::Type{UInt16}) = T"System.UInt16"
 box(x::Int32, handle) = CLRBridge.PutInt32(handle, x)
-boxedtype(::Type{Int32}) = Type"System.Int32"
+boxedtype(::Type{Int32}) = T"System.Int32"
 box(x::UInt32, handle) = CLRBridge.PutUInt32(handle, x)
-boxedtype(::Type{UInt32}) = Type"System.UInt32"
+boxedtype(::Type{UInt32}) = T"System.UInt32"
 box(x::Int64, handle) = CLRBridge.PutInt64(handle, x)
-boxedtype(::Type{Int64}) = Type"System.Int64"
+boxedtype(::Type{Int64}) = T"System.Int64"
 box(x::UInt64, handle) = CLRBridge.PutUInt64(handle, x)
-boxedtype(::Type{UInt64}) = Type"System.UInt64"
+boxedtype(::Type{UInt64}) = T"System.UInt64"
 box(x::Char, handle) = CLRBridge.PutChar(handle, x)
-boxedtype(::Type{Char}) = Type"System.Char"
+boxedtype(::Type{Char}) = T"System.Char"
 box(x::String, handle) = CLRBridge.PutString(handle, x)
-boxedtype(::Type{String}) = Type"System.String"
+boxedtype(::Type{String}) = T"System.String"
 
 function Base.convert(CLRObject, x)
     CLRBridge.Duplicate(box(x, 1))
