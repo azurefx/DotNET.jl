@@ -1,16 +1,20 @@
-function Base.iterate(obj::CLRObject)
-    gethandle(obj) == 0 && return nothing
-    objty = clrtypeof(obj)
-    enumerablety = Type"System.Collections.IEnumerable"
-    if !isassignable(enumerablety, objty)
-        throw(ArgumentError("Object is not iterable"))
-    end
-    enumerator = invokemember(enumerablety, obj, :GetEnumerator)
+function iterate_ienumerable(enumerator::CLRObject)
     enumeratorty = Type"System.Collections.IEnumerator"
     hasnext = invokemember(enumeratorty, enumerator, :MoveNext)
     hasnext || return nothing
     next = invokemember(enumeratorty, enumerator, :Current)
     return (next, (enumerator, enumeratorty))
+end
+
+function Base.iterate(obj::CLRObject)
+    gethandle(obj) == 0 && return nothing
+    objty = clrtypeof(obj)
+    enumerablety = Type"System.Collections.IEnumerable"
+    if isassignable(enumerablety, objty)
+        enumerator = invokemember(enumerablety, obj, :GetEnumerator)
+        return iterate_ienumerable(enumerator)
+    end
+    throw(ArgumentError("Object is not iterable"))
 end
 
 function Base.iterate(::CLRObject, state)
@@ -26,8 +30,8 @@ function clreltype(obj::CLRObject)
 end
 
 function Base.eltype(obj::CLRObject)
-    clrtype = clreltype(obj)
-    typestr = string(clrtype)
+    elt = clreltype(obj)
+    typestr = string(gethandle(elt) == 0 ? clrtypeof(obj) : elt)
     return if haskey(TYPES_TO_UNBOX, typestr)
         TYPES_TO_UNBOX[typestr][1]
     else
