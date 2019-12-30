@@ -5,7 +5,7 @@ function gettypecached(typename)
         return TYPE_CACHE[typename]
     end
     ty = CLRBridge.GetType(typename)
-    if gethandle(ty) != 0
+    if !isnull(ty)
         TYPE_CACHE[typename] = ty
     end
     return ty

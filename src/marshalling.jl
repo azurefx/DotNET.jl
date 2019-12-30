@@ -18,7 +18,7 @@ let
 end
 
 function unbox(obj::CLRObject)
-    gethandle(obj) == 0 && return obj
+    isnull(obj) && return obj
     typename = string(clrtypeof(obj))
     if haskey(TYPES_TO_UNBOX, typename)
         return TYPES_TO_UNBOX[typename][2](gethandle(obj))

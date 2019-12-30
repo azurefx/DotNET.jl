@@ -1,7 +1,7 @@
 module CLRBridge
 
 import ...CLR:HRESULT,isfailed,CLRHostError,BStr,CLRHost,create_host,create_delegate
-export CLRObject,null,gethandle,CLRException,BindingFlags
+export CLRObject,null,isnull,gethandle,CLRException,BindingFlags
 
 const Handle = UInt
 
@@ -17,6 +17,8 @@ end
 gethandle(obj::CLRObject) = getfield(obj, :handle)
 
 const null = CLRObject(0)
+
+isnull(obj::CLRObject) = gethandle(obj) == 0
 
 function track(handle)
     obj = CLRObject(handle)

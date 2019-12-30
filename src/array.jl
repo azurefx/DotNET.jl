@@ -15,7 +15,7 @@ function iterate_ienumerable_t(enumerator::CLRObject, elt::CLRObject)
 end
 
 function Base.iterate(obj::CLRObject)
-    gethandle(obj) == 0 && return nothing
+    isnull(obj) && return nothing
     objty = clrtypeof(obj)
     enumerablety = T"System.Collections.IEnumerable"
     if isassignable(enumerablety, objty)
@@ -23,7 +23,7 @@ function Base.iterate(obj::CLRObject)
         return iterate_ienumerable(enumerator)
     end
     elt = clreltype(obj)
-    if gethandle(elt) != 0
+    if !isnull(elt)
         enumerablety = makegenerictype(T"System.Collections.Generic.IEnumerable`1", elt)
         if isassignable(enumerablety, objty)
             enumerator = invokemember(enumerablety, obj, :GetEnumerator)
@@ -47,7 +47,7 @@ end
 
 function Base.eltype(obj::CLRObject)
     elt = clreltype(obj)
-    typestr = string(gethandle(elt) == 0 ? clrtypeof(obj) : elt)
+    typestr = string(isnull(elt) ? clrtypeof(obj) : elt)
     return if haskey(TYPES_TO_UNBOX, typestr)
         TYPES_TO_UNBOX[typestr][1]
     else
