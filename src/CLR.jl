@@ -1,5 +1,7 @@
 module CLR
 
+import Pkg.Artifacts:@artifact_str
+
 export CLRObject,null,CLRException,@T_str
 export clrtypeof,isclrtype,isassignable
 export clreltype
@@ -38,10 +40,7 @@ end
 
 function init_coreclr(runtime)
     CoreCLR.init(runtime)
-    clrbridge = raw"C:\Users\Azure\Documents\Git\CLRBridge\CLRBridge\bin\Debug\netstandard2.0\CLRBridge.dll"
-    if !isfile(clrbridge)
-        error("CLRBridge.dll not found")
-    end
+    clrbridge = joinpath(artifact"clrbridge", "CLRBridge.dll")
     tpalist = build_tpalist(dirname(runtime.path))
     push!(tpalist, clrbridge)
     CURRENT_CLR_HOST[] = create_host(CoreCLRHost;tpalist = tpalist)
