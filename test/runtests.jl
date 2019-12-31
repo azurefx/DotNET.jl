@@ -29,13 +29,22 @@ end # testset
 end
 
 @testset "Member Invocation" begin
-    ArrayList = T"System.Collections.ArrayList"
+    ArrayList = T"System.Collections.ArrayList, mscorlib"
     li = ArrayList.new()
     li.Add(42)
     @test li.Count == 1
-    ListT = T"System.Collections.Generic.List`1"
+    ListT = T"System.Collections.Generic.List`1, mscorlib"
     li = ListT.new[T"System.Int64"]()
     li.Add(42)
     @test li.Count == 1
     @test isclrtype(T"System.Array".Empty[T"System.Int64"](), T"System.Int64[]")
+end
+
+@testset "Type System" begin
+    li = convert(CLRObject, Int64[1])
+    @test eltype(collect(li)) == Int64
+    List = T"System.Collections.Generic.List`1"
+    li = List.new[T"System.Int64"]()
+    li.Add(Int64(1))
+    @test eltype(collect(li)) == Int64
 end

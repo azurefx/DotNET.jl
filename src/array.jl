@@ -42,7 +42,11 @@ function Base.iterate(::CLRObject, state)
 end
 
 function clreltype(obj::CLRObject)
-    invokemember(T"System.Type", clrtypeof(obj), :GetElementType)
+    ty = clrtypeof(obj)
+    if isassignable(T"System.Collections.IEnumerable", ty) && invokemember(T"System.Type", ty, :IsGenericType)
+        return arrayload(invokemember(T"System.Type", ty, :GetGenericArguments), 0)
+    end
+    invokemember(T"System.Type", ty, :GetElementType)
 end
 
 function Base.eltype(obj::CLRObject)
