@@ -4,7 +4,8 @@ import Pkg.Artifacts:@artifact_str
 
 export CLRObject,null,isnull,CLRException,@T_str,
     clrtypeof,isclrtype,isassignable,
-    clreltype
+    clreltype,
+    delegate
 
 include("typedef.jl")
 

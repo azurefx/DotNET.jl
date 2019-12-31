@@ -12,6 +12,8 @@ You will need to have `.NET Core` SDK/runtime 2.0 or higher installed on the mac
 
 ⚠ `.NET Framework` is currently not supported (but on the roadmap).
 
+This package uses `Artifacts` to provide binary dependencies, so Julia 1.3+ is required.
+
 ## Installation
 
 ```julia
@@ -43,4 +45,42 @@ julia> T"System.Reflection.Assembly".LoadFrom(raw"C:\Users\Azure\Desktop\test.dl
 System.Reflection.RuntimeAssembly("test, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null")
 ```
 
-😂 I know it's a pain... I'm working on it <3
+4. To create an object:
+
+```
+julia> T"System.String".new('6',Int32(3))
+"666"
+
+julia> List=T"System.Collections.Generic.List`1"
+System.Collections.Generic.List`1[T]
+
+julia> List.new[T"System.Int64"]()
+System.Collections.Generic.List`1[System.Int64]("System.Collections.Generic.List`1[System.Int64]")
+
+```
+
+5. To create delegates from Julia methods:
+
+```
+julia> list=List.new[T"System.Int64"](1:5);
+
+julia> list.RemoveAll(delegate(iseven,T"System.Predicate`1[System.Int64]"))
+2
+
+julia> collect(list)
+3-element Array{Int64,1}:
+ 1
+ 3
+ 5
+```
+
+## TODO
+
+- Implicit conversions when calling CLR methods
+- More operators
+- `using` directive like C#
+- Smart assembly/type resolution
+- Configurable runtime versions
+- Julia type system consistency
+- .NET Framework support
+- PowerShell support (maybe in another package)
