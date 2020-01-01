@@ -1,6 +1,6 @@
-# CLR.jl
+# DotNET.jl
 
-[![Build Status](https://travis-ci.org/azurefx/CLR.jl.svg?branch=master)](https://travis-ci.org/azurefx/CLR.jl)
+[![Build Status](https://travis-ci.org/azurefx/DotNET.jl.svg?branch=master)](https://travis-ci.org/azurefx/DotNET.jl)
 
 This package provides interoperability between Julia and [`Common Language Runtime`](https://docs.microsoft.com/dotnet/standard/clr), the execution engine of `.NET` applications. Many languages run on CLR, including `C#`, `Visual Basic .NET` and `PowerShell`.
 
@@ -19,7 +19,7 @@ This package uses `Artifacts` to provide binary dependencies, so Julia 1.3+ is r
 ```julia
 julia> using Pkg
 
-julia> Pkg.add(PackageSpec(url="https://github.com/azurefx/CLR.jl"))
+julia> Pkg.add(PackageSpec(url="https://github.com/azurefx/DotNET.jl"))
 ```
 
 ## Usage

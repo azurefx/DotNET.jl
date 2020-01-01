@@ -1,6 +1,6 @@
 using Test
-using CLR
-import CLR:unbox
+using DotNET
+import DotNET:unbox
 
 @testset "Type Loader" begin
     @test T"System.Int64".Name == "Int64"

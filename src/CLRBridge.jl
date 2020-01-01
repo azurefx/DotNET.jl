@@ -1,6 +1,6 @@
 module CLRBridge
 
-import ...CLR:HRESULT,isfailed,CLRHostError,BStr,CLRHost,create_host,create_delegate
+import ...DotNET:HRESULT,isfailed,CLRHostError,BStr,CLRHost,create_host,create_delegate
 export CLRObject,null,isnull,gethandle,CLRException,BindingFlags
 
 const Handle = UInt

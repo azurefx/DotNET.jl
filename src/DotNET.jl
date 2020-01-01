@@ -1,4 +1,4 @@
-module CLR
+module DotNET
 
 import Pkg.Artifacts:@artifact_str
 
@@ -38,7 +38,7 @@ function __init__()
     end
     @error """
     No .NET Core runtime found on this system.
-    Try specifying DOTNET_ROOT environment variable or adding 'dotnet' executable to PATH, then run 'CLR.__init__()' again.
+    Try specifying DOTNET_ROOT environment variable or adding 'dotnet' executable to PATH, then run 'DotNET.__init__()' again.
     Note that .NET Framework is current not supported.
     """
 end
@@ -50,7 +50,7 @@ function init_coreclr(runtime)
     if !isfile(clrbridge)
         error("""
         Artifact is present but CLRBridge.dll not found, possibly due to a broken package installation.
-        You may need to delete the artifact directory '$dir' and try 'CLR.__init__()' again.
+        You may need to delete the artifact directory '$dir' and try 'DotNET.__init__()' again.
         """)
     end
     tpalist = build_tpalist(dirname(runtime.path))

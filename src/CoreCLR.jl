@@ -2,7 +2,7 @@ module CoreCLR
 
 using Libdl
 
-import ...CLR:HRESULT,isfailed,CLRHostError,CLRHost,detect_runtime,create_host,create_delegate
+import ...DotNET:HRESULT,isfailed,CLRHostError,CLRHost,detect_runtime,create_host,create_delegate
 export CoreCLRHost
 
 const fp_coreclr_initialize = Ref{Ptr{Cvoid}}(0)

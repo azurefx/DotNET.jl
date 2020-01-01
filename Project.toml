@@ -1,4 +1,4 @@
-name = "CLR"
+name = "DotNET"
 uuid = "5091b313-875f-492b-8fe1-0f0d7d725ad8"
 authors = ["AzureFx <i@azurefx.name>"]
 version = "0.1.0"
