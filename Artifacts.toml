@@ -1,6 +1,6 @@
 [clrbridge]
-git-tree-sha1 = "5c005e142ebba033996dcc97b249e9e5ebcbf138"
+git-tree-sha1 = "4826626514d5b30141d9cd1f0580bae95e797e01"
 
     [[clrbridge.download]]
-    url = "https://github.com/azurefx/CLRBridge/releases/download/v0.1.0/CLRBridge.v0.1.0.tar.gz"
-    sha256 = "c46f81745efbdebfd89c2105f697829c01024c4f14192a233cb0f4c632237bab"
+    url = "https://github.com/azurefx/CLRBridge/releases/download/v0.1.1/CLRBridge.v0.1.1.tar.gz"
+    sha256 = "d29dfea5c86862f4f5e065c04b2ca5e43bbb72b5ac2d817ffdd6b675263a4449"

@@ -33,7 +33,11 @@ function __init__()
     if CURRENT_CLR_HOST[] != DummyCLRHost() return end
     coreclr = detect_runtime(CoreCLRHost)
     if !isempty(coreclr)
-        init_coreclr(first(coreclr))
+        inittask = @task begin
+            init_coreclr(first(coreclr))
+        end
+        schedule(inittask)
+        wait(inittask)
         return
     end
     @error """
@@ -57,10 +61,28 @@ function init_coreclr(runtime)
     push!(tpalist, clrbridge)
     CURRENT_CLR_HOST[] = create_host(CoreCLRHost;tpalist = tpalist)
     CLRBridge.init(CURRENT_CLR_HOST[])
+    add_typeresolver()
 end
 
 function build_tpalist(dir)
     joinpath.(dir, filter(x->splitext(x)[2] == ".dll", readdir(dir)))
+end
+
+function add_typeresolver()
+    d = delegate(T"System.ResolveEventHandler") do sender, args
+        name = args.Name
+        for asm in T"System.AppDomain, mscorlib".CurrentDomain.GetAssemblies()
+            ty = asm.GetType(name)
+            if !isnull(ty)
+                return asm
+            end
+        end
+        return CLRObject(0)
+    end
+    evt = getevent(T"System.AppDomain, mscorlib", :TypeResolve)
+    if !isnull(evt)
+        evt.AddEventHandler(T"System.AppDomain, mscorlib".CurrentDomain, d)
+    end
 end
 
 end # module

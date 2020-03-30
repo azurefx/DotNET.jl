@@ -40,3 +40,7 @@ function getmethod(type::CLRObject, name, argtypes...)
     end
     invokemember(type, :GetMethod, name, arr)
 end
+
+function getevent(type::CLRObject,name)
+    invokemember(type, :GetEvent, typeof(name) == Symbol ? string(name) : name)
+end

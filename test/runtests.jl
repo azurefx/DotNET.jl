@@ -1,6 +1,6 @@
 using Test
 using DotNET
-import DotNET:unbox
+import DotNET:unbox, makegenerictype
 
 @testset "Type Loader" begin
     @test T"System.Int64".Name == "Int64"
@@ -47,4 +47,21 @@ end
     li = List.new[T"System.Int64"]()
     li.Add(Int64(1))
     @test eltype(collect(li)) == Int64
+end
+
+@testset "Delegate" begin
+    ICollectionT = T"System.Collections.Generic.ICollection`1, mscorlib"
+    ListT = T"System.Collections.Generic.List`1, mscorlib"
+    collint = makegenerictype(ICollectionT, T"System.Int32")
+    listint = makegenerictype(ListT, T"System.Int32")
+    li = listint.new()
+    refeq(a, b) = T"System.Object".ReferenceEquals(a, b)
+    delegate(()->li.Add(Int32(1)), T"System.Action").Invoke()
+    @test collect(li) == Int32[1]
+    @test refeq(delegate(identity, makegenerictype(T"System.Func`2", listint, listint)).Invoke(li), li)
+    @test refeq(delegate(identity, makegenerictype(T"System.Func`2", collint, listint)).Invoke(li), li)
+    @test refeq(delegate(identity, makegenerictype(T"System.Func`2", listint, collint)).Invoke(li), li)
+    @test refeq(delegate(identity, makegenerictype(T"System.Func`2", collint, collint)).Invoke(li), li)
+    @test delegate(x->2x, T"System.Func`2[System.Int32, System.Int32]").Invoke(Int32(1)) === Int32(2)
+    @test delegate(x->2x, T"System.Func`2[System.Int32, System.UInt64]").Invoke(Int32(1)) === UInt64(2)
 end
