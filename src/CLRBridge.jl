@@ -79,6 +79,10 @@ const fp_PutInt64 = empty_fp()
 const fp_GetInt64 = empty_fp()
 const fp_PutUInt64 = empty_fp()
 const fp_GetUInt64 = empty_fp()
+const fp_PutFloat32 = empty_fp()
+const fp_GetFloat32 = empty_fp()
+const fp_PutFloat64 = empty_fp()
+const fp_GetFloat64 = empty_fp()
 
 const fp_GetType = empty_fp()
 const fp_GetObjectType = empty_fp()
@@ -125,6 +129,10 @@ function init(host::CLRHost)
     fp_GetInt64[] = fp_primitive("GetInt64")
     fp_PutUInt64[] = fp_primitive("PutUInt64")
     fp_GetUInt64[] = fp_primitive("GetUInt64")
+    fp_PutFloat32[] = fp_primitive("PutFloat32")
+    fp_GetFloat32[] = fp_primitive("GetFloat32")
+    fp_PutFloat64[] = fp_primitive("PutFloat64")
+    fp_GetFloat64[] = fp_primitive("GetFloat64")
     fp_meta(x) = create_delegate(host, "CLRBridge", "CLRBridge.Meta", x)
     fp_GetType[] = fp_meta("GetType")
     fp_GetObjectType[] = fp_meta("GetObjectType")
@@ -242,6 +250,22 @@ end
 
 function GetUInt64(handle)
     ccall(fp_GetUInt64[], UInt64, (Handle,), handle)
+end
+
+function PutFloat32(handle, value)
+    ccall(fp_PutFloat32[], Handle, (Handle, Float32), handle, value)
+end
+
+function GetFloat32(handle)
+    ccall(fp_GetFloat32[], Float32, (Handle,), handle)
+end
+
+function PutFloat64(handle, value)
+    ccall(fp_PutFloat64[], Handle, (Handle, Float64), handle, value)
+end
+
+function GetFloat64(handle)
+    ccall(fp_GetFloat64[], Float64, (Handle,), handle)
 end
 
 function GetType(typename)

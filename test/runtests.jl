@@ -19,6 +19,8 @@ end # testset
     uturn(UInt32(42))
     uturn(Int64(42))
     uturn(UInt64(42))
+    uturn(Float32(42))
+    uturn(Float64(42))
     uturn('A')
     uturn("Hello, World!")
     array = convert(CLRObject, [1,2,3])

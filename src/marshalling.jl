@@ -13,6 +13,8 @@ let
     unboxer("System.UInt32", UInt32, CLRBridge.GetUInt32)
     unboxer("System.Int64", Int64, CLRBridge.GetInt64)
     unboxer("System.UInt64", UInt64, CLRBridge.GetUInt64)
+    unboxer("System.Single", Float32, CLRBridge.GetFloat32)
+    unboxer("System.Double", Float64, CLRBridge.GetFloat64)
     unboxer("System.Char", Char, CLRBridge.GetChar)
     unboxer("System.String", String, CLRBridge.GetString)
 end
@@ -47,6 +49,10 @@ box(x::Int64, handle) = CLRBridge.PutInt64(handle, x)
 boxedtype(::Type{Int64}) = T"System.Int64"
 box(x::UInt64, handle) = CLRBridge.PutUInt64(handle, x)
 boxedtype(::Type{UInt64}) = T"System.UInt64"
+box(x::Float32, handle) = CLRBridge.PutFloat32(handle, x)
+boxedtype(::Type{Float32}) = T"System.Single"
+box(x::Float64, handle) = CLRBridge.PutFloat64(handle, x)
+boxedtype(::Type{Float64}) = T"System.Double"
 box(x::Char, handle) = CLRBridge.PutChar(handle, x)
 boxedtype(::Type{Char}) = T"System.Char"
 box(x::String, handle) = CLRBridge.PutString(handle, x)
