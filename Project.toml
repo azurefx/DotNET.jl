@@ -1,7 +1,7 @@
 name = "DotNET"
 uuid = "5091b313-875f-492b-8fe1-0f0d7d725ad8"
 authors = ["AzureFx <i@azurefx.name>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
