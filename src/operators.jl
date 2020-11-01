@@ -89,3 +89,13 @@ function Base.getproperty(obj::CLRObject, sym::Symbol)
         invokemember(pi.type, pi.target, pi.name)
     end
 end
+
+function Base.setproperty!(obj::CLRObject, sym::Symbol, val)
+    ty = clrtypeof(obj)
+    flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.SetProperty
+    if isassignable(T"System.Type", ty)
+        invokemember(flags, obj, CLRObject(0), sym, val)
+    else
+        invokemember(flags, ty, obj, sym, val)
+    end
+end

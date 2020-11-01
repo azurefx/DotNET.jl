@@ -9,11 +9,6 @@ mutable struct CLRObject
     handle::Handle
 end
 
-function Base.setproperty!(x::CLRObject, f::Symbol, v)
-    @assert f != :handle "attempt to modify underlying handle of CLRObject"
-    setfield!(x, f, v)
-end
-
 gethandle(obj::CLRObject) = getfield(obj, :handle)
 
 const null = CLRObject(0)
