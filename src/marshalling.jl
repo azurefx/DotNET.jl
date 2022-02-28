@@ -58,9 +58,11 @@ boxedtype(::Type{Char}) = T"System.Char"
 box(x::String, handle) = CLRBridge.PutString(handle, x)
 boxedtype(::Type{String}) = T"System.String"
 
-function Base.convert(CLRObject, x)
+function Base.convert(::Type{CLRObject}, x)
     CLRBridge.Duplicate(box(x, 1))
 end
+
+Base.convert(::Type{CLRObject}, x::CLRObject) = x
 
 function invokemember(flags, type::CLRObject, this::CLRObject, name, args...)
     boxed = map(args, 1:length(args)) do arg, i

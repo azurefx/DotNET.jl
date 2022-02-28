@@ -30,8 +30,10 @@ function Base.iterate(obj::CLRObject)
             return iterate_ienumerable(enumerator)
         end
     end
-    throw(ArgumentError("Object is not iterable"))
+    (unbox(obj), nothing)
 end
+
+Base.iterate(::CLRObject, ::Nothing) = nothing
 
 function Base.iterate(::CLRObject, state)
     enumerator, enumeratorty = state
@@ -51,7 +53,7 @@ end
 
 function Base.eltype(obj::CLRObject)
     elt = clreltype(obj)
-    typestr = string(isnull(elt) ? clrtypeof(obj) : elt)
+    typestr = string(isnull(elt) ? Any : elt)
     return if haskey(TYPES_TO_UNBOX, typestr)
         TYPES_TO_UNBOX[typestr][1]
     else
@@ -66,7 +68,31 @@ function Base.length(obj::CLRObject)
     elseif isassignable(T"System.Collections.IList", objty)
         invokemember(obj, :Count)
     else
-        throw(ArgumentError("Cannot determine length from type $objty"))
+        throw(ArgumentError("length() is not supported by $objty"))
+    end
+end
+
+function Base.axes(obj::CLRObject)
+    objty = clrtypeof(obj)
+    if isassignable(T"System.Array", objty)
+        rank = invokemember(obj, :Rank)
+        tuple((invokemember(obj, :GetLength, Int32(d)) for d = 0:rank-1)...)
+    elseif isassignable(T"System.Collections.IList", objty)
+        (Base.OneTo(invokemember(obj, :Count)),)
+    else
+        throw(ArgumentError("axes() is not supported by $objty"))
+    end
+end
+
+function Base.IteratorSize(obj::CLRObject)
+    objty = clrtypeof(obj)
+    if isassignable(T"System.Array", objty)
+        rank = invokemember(obj, :Rank)
+        Base.HasShape{rank}()
+    elseif isassignable(T"System.Collections.IList", objty)
+        Base.HasLength()
+    else
+        Base.SizeUnknown()
     end
 end
 
@@ -86,7 +112,7 @@ makearraytype(ty::CLRObject, rank) = invokemember(ty, :MakeArrayType, rank)
 
 function box(x::AbstractArray{T,N}, handle) where {T,N}
     a = arrayof(boxedtype(T), size(x))
-    clrind = CartesianIndices(size(x))
+    clrind = PermutedDimsArray(CartesianIndices(size(x)), ndims(x):-1:1)
     for i in LinearIndices(x)
         arraystore(a, Tuple(clrind[i]) .- 1, x[i])
     end
