@@ -1,6 +1,6 @@
 using Test
 using DotNET
-import DotNET:unbox
+import DotNET: unbox, arrayof
 
 @testset "Type Loader" begin
     @test T"System.Int64".Name == "Int64"
@@ -10,7 +10,8 @@ import DotNET:unbox
 end # testset
 
 @testset "Marshaller" begin
-    uturn(x) = @test (unbox(convert(CLRObject, x)) === x);true
+    uturn(x) = @test (unbox(convert(CLRObject, x)) === x)
+    true
     uturn(Int8(42))
     uturn(UInt8(42))
     uturn(Int16(42))
@@ -23,8 +24,8 @@ end # testset
     uturn(Float64(42))
     uturn('A')
     uturn("Hello, World!")
-    array = convert(CLRObject, [1,2,3])
-    @test collect(array) == [1,2,3]
+    array = convert(CLRObject, [1, 2, 3])
+    @test collect(array) == [1, 2, 3]
     for (i, x) in enumerate(array)
         @test x == i
     end
@@ -46,11 +47,24 @@ end
     @test T"System.Object, mscorlib".Equals(ref.Target, WeakReference)
 end
 
-@testset "Type System" begin
-    li = convert(CLRObject, Int64[1])
-    @test eltype(collect(li)) == Int64
+@testset "Generics" begin
     List = T"System.Collections.Generic.List`1"
     li = List.new[T"System.Int64"]()
     li.Add(Int64(1))
     @test eltype(collect(li)) == Int64
+end
+
+@testset "Arrays and Iteration" begin
+    @test eltype(convert(CLRObject, Int64[1])) == Int64
+    jlarr = reshape(1:24, (2, 3, 4))
+    arr = convert(CLRObject, jlarr)
+    @test axes(arr) == (2, 3, 4)
+    @test collect(arr) == jlarr
+    ch = Channel() do ch
+        e = arr.GetEnumerator()
+        while e.MoveNext()
+            put!(ch, e.Current)
+        end
+    end
+    @test collect(ch) == jlarr[:]
 end
