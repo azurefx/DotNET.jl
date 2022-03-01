@@ -1,7 +1,7 @@
 # DotNET.jl
 
-[![Build Status](https://travis-ci.org/azurefx/DotNET.jl.svg?branch=master)](https://travis-ci.org/azurefx/DotNET.jl)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+![Build Status](https://github.com/azurefx/DotNET.jl/actions/workflows/ci.yml/badge.svg)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
 This package provides interoperability between Julia and [`Common Language Runtime`](https://docs.microsoft.com/dotnet/standard/clr), the execution engine of `.NET` applications. Many languages run on CLR, including `C#`, `Visual Basic .NET` and `PowerShell`.
 
