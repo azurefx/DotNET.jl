@@ -41,11 +41,6 @@ end
     li.Add(42)
     @test li.Count == 1
     @test isclrtype(T"System.Array".Empty[T"System.Int64"](), T"System.Int64[]")
-    Console = T"System.Console, mscorlib"
-    oldpos = Console.CursorTop
-    Console.CursorTop = Int32(0)
-    @test Console.CursorTop == Int32(0)
-    Console.CursorTop = oldpos
     WeakReference = T"System.WeakReference, mscorlib"
     ref = WeakReference.new(CLRObject(0))
     ref.Target = WeakReference
