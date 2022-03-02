@@ -89,16 +89,38 @@ julia> DotNET.unbox(s)
 "❤"
 ```
 
+To pass an argument by reference (`out`/`ref` in `C#`), wrap it into a `Ref` object:
+
+```julia
+julia> result = Ref{Int}()
+Base.RefValue{Int64}(212700848)
+
+julia> T"System.Int64".TryParse("1970", result)
+true
+
+julia> result[]
+1970
+
+julia> result = Ref(null)
+Base.RefValue{CLRObject}(null)
+
+julia> T"System.Int64".TryParse("2022", result)
+true
+
+julia> result[]
+System.Int64(2022)
+```
+
 ### Arrays and Collections
 
 To copy a multidimensional array from `.NET` to Julia, use `collect` method:
 
 ```julia
-julia> arr = convert(CLRObject, reshape(UnitRange{Int32}(1, 8), 2, 2, 2))
-System.Int32[,,]("System.Int32[,,]")
+julia> arr = convert(CLRObject, reshape(1:8, 2, 2, 2))
+System.Int64[,,]("System.Int64[,,]")
 
 julia> collect(arr)
-2×2×2 Array{Int32, 3}:
+2×2×2 Array{Int64, 3}:
 [:, :, 1] =
  1  3
  2  4
@@ -110,8 +132,8 @@ julia> collect(arr)
 
 CLI `Array` elements are stored in *row-major* order, thus the equivalent definition in `C#` is
 ```csharp
-public static int[,,] Get3DArray() {
-  return new int[2, 2, 2] {
+public static long[,,] Get3DArray() {
+  return new long[2, 2, 2] {
     {{1, 2}, {3, 4}},
     {{5, 6}, {7, 8}}
   };
