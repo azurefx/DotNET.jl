@@ -45,6 +45,16 @@ end
     ref = WeakReference.new(CLRObject(0))
     ref.Target = WeakReference
     @test T"System.Object, mscorlib".Equals(ref.Target, WeakReference)
+
+    # varargs
+    @test T"System.String".Format("{0}{1}{2}", "i", 18, "n") == "i18n"
+
+    # field access
+    let t = T"System.ValueTuple`1".new[T"System.Int32"](Int32(1))
+        @test t.Item1 == Int32(1)
+        t.Item1 = Int32(2)
+        @test t.Item1 == Int32(2)
+    end
 end
 
 @testset "Generics" begin
