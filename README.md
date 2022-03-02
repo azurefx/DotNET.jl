@@ -94,11 +94,11 @@ julia> DotNET.unbox(s)
 To copy a multidimensional array from `.NET` to Julia, use `collect` method:
 
 ```julia
-julia> arr = convert(CLRObject, reshape(1:8, 2, 2, 2))
-System.Int64[,,]("System.Int64[,,]")
+julia> arr = convert(CLRObject, reshape(UnitRange{Int32}(1, 8), 2, 2, 2))
+System.Int32[,,]("System.Int32[,,]")
 
 julia> collect(arr)
-2×2×2 Array{Int64, 3}:
+2×2×2 Array{Int32, 3}:
 [:, :, 1] =
  1  3
  2  4
@@ -199,7 +199,7 @@ To create a delegate from a Julia method, use `delegate` method:
 julia> list = ListT.new[T"System.Int64"](1:5)
 System.Collections.Generic.List`1[System.Int64]("System.Collections.Generic.List`1[System.Int64]")
 
-julia> list.RemoveAll(delegate(iseven,T"System.Predicate`1[System.Int64]"))
+julia> list.RemoveAll(delegate(iseven, T"System.Predicate`1[System.Int64]"))
 2
 
 julia> collect(list)
