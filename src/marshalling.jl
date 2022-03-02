@@ -57,6 +57,10 @@ box(x::Char, handle) = CLRBridge.PutChar(handle, x)
 boxedtype(::Type{Char}) = T"System.Char"
 box(x::String, handle) = CLRBridge.PutString(handle, x)
 boxedtype(::Type{String}) = T"System.String"
+box(x::Ref{CLRObject}, handle) = CLRBridge.PutObject(handle, gethandle(isassigned(x) ? x[] : CLRObject(0)))
+boxedtype(::Type{Ref{CLRObject}}) = boxedtype(CLRObject)
+box(x::Ref{T}, handle) where {T} = box(isassigned(x) ? x[] : Ref(CLRObject(0)), handle)
+boxedtype(::Type{Ref{T}}) where {T} = boxedtype(T)
 
 function Base.convert(::Type{CLRObject}, x)
     CLRBridge.Duplicate(box(x, 1))
@@ -64,11 +68,25 @@ end
 
 Base.convert(::Type{CLRObject}, x::CLRObject) = x
 
+function updateref(x::Ref{CLRObject}, handle)
+    x[] = CLRBridge.Duplicate(handle)
+end
+
+function updateref(x::Ref{T}, handle) where {T}
+    x[] = unbox(CLRObject(handle))
+end
+
 function invokemember(flags, type::CLRObject, this::CLRObject, name, args...)
     boxed = map(args, 1:length(args)) do arg, i
         box(arg, i)
     end
-    unbox(CLRBridge.InvokeMember(gethandle(type), string(name), flags, 0, gethandle(this), boxed))
+    ret = CLRBridge.InvokeMember(gethandle(type), string(name), flags, 0, gethandle(this), boxed)
+    for (i, arg) in enumerate(args)
+        if arg isa Ref
+            updateref(arg, i)
+        end
+    end
+    unbox(ret)
 end
 
 function invokemember(type::CLRObject, this::CLRObject, name, args...)
