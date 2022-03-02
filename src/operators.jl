@@ -92,7 +92,7 @@ end
 
 function Base.setproperty!(obj::CLRObject, sym::Symbol, val)
     ty = clrtypeof(obj)
-    flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.SetProperty
+    flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.SetProperty | BindingFlags.SetField
     if isassignable(T"System.Type", ty)
         invokemember(flags, obj, CLRObject(0), sym, val)
     else
