@@ -55,6 +55,25 @@ end
         t.Item1 = Int32(2)
         @test t.Item1 == Int32(2)
     end
+
+    # out parameters
+    let
+        tryparse(s, i) = T"System.Int64".TryParse(s, i)
+        @test tryparse("42", null)
+        @test !tryparse("abc", null)
+        r = Ref{Int64}()
+        @test !tryparse("abc", r)
+        tryparse("123", r)
+        @test r[] == 123
+        r = Ref{CLRObject}()
+        tryparse("def", r)
+        @test unbox(r[]) == 0
+        tryparse("456", r)
+        @test unbox(r[]) == 456
+        r = Ref{CLRObject}(1)
+        tryparse("789", r)
+        @test unbox(r[]) == 789
+    end
 end
 
 @testset "Generics" begin

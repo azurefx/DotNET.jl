@@ -51,6 +51,7 @@ empty_fp() = Ref{Ptr{Cvoid}}(0)
 const fp_Release = empty_fp()
 const fp_Duplicate = empty_fp()
 const fp_CreateArray = empty_fp()
+const fp_PutObject = empty_fp()
 const fp_PutString = empty_fp()
 const fp_GetString = empty_fp()
 const fp_FreeString = empty_fp()
@@ -101,6 +102,7 @@ function init(host::CLRHost)
     fp_Release[] = fp_primitive("Release")
     fp_Duplicate[] = fp_primitive("Duplicate")
     fp_CreateArray[] = fp_primitive("CreateArray")
+    fp_PutObject[] = fp_primitive("PutObject")
     fp_PutString[] = fp_primitive("PutString")
     fp_GetString[] = fp_primitive("GetString")
     fp_FreeString[] = fp_primitive("FreeString")
@@ -150,6 +152,10 @@ end
 
 function CreateArray(argc)
     track(ccall(fp_CreateArray[], Handle, (UInt32,), argc))
+end
+
+function PutObject(handle, value)
+    ccall(fp_PutObject[], Handle, (Handle, Handle), handle, value)
 end
 
 function PutString(handle, value)
